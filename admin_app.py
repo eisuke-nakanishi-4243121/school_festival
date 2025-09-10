@@ -4,9 +4,11 @@ import folium
 import webbrowser
 import os
 import tempfile
+import threading
 from database import init_database
 from store_manager import StoreManager
-from locations import get_location_names, get_location_data, is_manual_input_required
+# locations モジュールは不要になったため削除
+from map_selector import select_coordinates_from_map
 
 class AdminApp:
     def __init__(self, root):
@@ -21,7 +23,6 @@ class AdminApp:
         # 選択された座標
         self.selected_lat = None
         self.selected_lng = None
-        self.selected_location_name = None
         
         self.create_widgets()
         self.load_stores()
@@ -31,62 +32,65 @@ class AdminApp:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # 地図選択セクション
-        map_frame = ttk.LabelFrame(main_frame, text="店舗位置選択", padding="5")
-        map_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
-        
-        # 場所選択ドロップダウン
-        ttk.Label(map_frame, text="場所:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
-        self.location_var = tk.StringVar()
-        self.location_combo = ttk.Combobox(map_frame, textvariable=self.location_var, 
-                                           values=get_location_names(), state="readonly", width=25)
-        self.location_combo.grid(row=0, column=1, padx=(0, 10))
-        self.location_combo.bind('<<ComboboxSelected>>', self.on_location_selected)
-        
-        # プレビュー地図ボタン
-        ttk.Button(map_frame, text="地図プレビュー", command=self.show_preview_map).grid(row=0, column=2, padx=(0, 10))
+        # 座標入力セクション
+        coord_frame = ttk.LabelFrame(main_frame, text="店舗位置入力", padding="10")
+        coord_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 15))
         
         # 座標表示
-        self.coord_label = ttk.Label(map_frame, text="位置が選択されていません")
-        self.coord_label.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(5, 0))
+        self.coord_label = ttk.Label(coord_frame, text="座標を入力してください", font=("", 9))
+        self.coord_label.grid(row=0, column=0, columnspan=5, sticky=tk.W, pady=(0, 10))
         
-        # 手動入力フレーム（初期は非表示）
-        self.manual_frame = ttk.Frame(map_frame)
-        self.manual_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(5, 0))
+        # 座標入力フレーム
+        input_coord_frame = ttk.Frame(coord_frame)
+        input_coord_frame.grid(row=1, column=0, columnspan=5, sticky=(tk.W, tk.E))
         
-        ttk.Label(self.manual_frame, text="緯度:").grid(row=0, column=0, padx=(0, 5))
+        # 緯度入力
+        ttk.Label(input_coord_frame, text="緯度:", font=("", 9)).grid(row=0, column=0, sticky=tk.W, padx=(0, 8))
         self.manual_lat_var = tk.StringVar()
-        ttk.Entry(self.manual_frame, textvariable=self.manual_lat_var, width=15).grid(row=0, column=1, padx=(0, 10))
+        lat_entry = ttk.Entry(input_coord_frame, textvariable=self.manual_lat_var, width=18)
+        lat_entry.grid(row=0, column=1, padx=(0, 15))
         
-        ttk.Label(self.manual_frame, text="経度:").grid(row=0, column=2, padx=(0, 5))
+        # 経度入力
+        ttk.Label(input_coord_frame, text="経度:", font=("", 9)).grid(row=0, column=2, sticky=tk.W, padx=(0, 8))
         self.manual_lng_var = tk.StringVar()
-        ttk.Entry(self.manual_frame, textvariable=self.manual_lng_var, width=15).grid(row=0, column=3)
+        lng_entry = ttk.Entry(input_coord_frame, textvariable=self.manual_lng_var, width=18)
+        lng_entry.grid(row=0, column=3, padx=(0, 15))
         
-        ttk.Button(self.manual_frame, text="座標確定", command=self.confirm_manual_coordinates).grid(row=0, column=4, padx=(10, 0))
+        # 座標確定ボタン
+        ttk.Button(input_coord_frame, text="座標確定", command=self.confirm_manual_coordinates).grid(row=0, column=4)
         
-        # 初期状態では手動入力フレームを非表示
-        self.manual_frame.grid_remove()
+        # ボタンフレーム
+        button_coord_frame = ttk.Frame(coord_frame)
+        button_coord_frame.grid(row=2, column=0, columnspan=5, pady=(10, 0))
+        
+        # 地図から選択ボタン
+        ttk.Button(button_coord_frame, text="🗺️ 地図から選択", command=self.open_map_selector).pack(side=tk.LEFT, padx=(0, 10))
+        
+        # プレビュー地図ボタン
+        ttk.Button(button_coord_frame, text="👁️ 地図プレビュー", command=self.show_preview_map).pack(side=tk.LEFT)
         
         # 店舗情報入力セクション
-        input_frame = ttk.LabelFrame(main_frame, text="店舗情報入力", padding="5")
-        input_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        input_frame = ttk.LabelFrame(main_frame, text="店舗情報入力", padding="10")
+        input_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 15))
         
         # 店舗名
-        ttk.Label(input_frame, text="店舗名:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        ttk.Label(input_frame, text="店舗名:", font=("", 10)).grid(row=0, column=0, sticky=tk.W, pady=(0, 8))
         self.store_name_var = tk.StringVar()
-        ttk.Entry(input_frame, textvariable=self.store_name_var, width=30).grid(row=0, column=1, sticky=(tk.W, tk.E), pady=2)
+        store_entry = ttk.Entry(input_frame, textvariable=self.store_name_var, width=35, font=("", 10))
+        store_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
         
         # 店舗説明
-        ttk.Label(input_frame, text="店舗説明:").grid(row=1, column=0, sticky=tk.W, pady=2)
+        ttk.Label(input_frame, text="店舗説明:", font=("", 10)).grid(row=1, column=0, sticky=tk.W, pady=(0, 8))
         self.description_var = tk.StringVar()
-        ttk.Entry(input_frame, textvariable=self.description_var, width=30).grid(row=1, column=1, sticky=(tk.W, tk.E), pady=2)
+        desc_entry = ttk.Entry(input_frame, textvariable=self.description_var, width=35, font=("", 10))
+        desc_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
         
         # 商品情報の動的リスト
-        ttk.Label(input_frame, text="商品情報:").grid(row=2, column=0, sticky=(tk.W, tk.N), pady=2)
+        ttk.Label(input_frame, text="商品情報:", font=("", 10)).grid(row=2, column=0, sticky=(tk.W, tk.N), pady=(8, 0))
         
         # 商品リスト用フレーム
         self.products_frame = ttk.Frame(input_frame)
-        self.products_frame.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=2)
+        self.products_frame.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=(8, 0))
         
         # 商品リストの管理
         self.product_entries = []
@@ -101,14 +105,19 @@ class AdminApp:
         
         # ボタンフレーム
         button_frame = ttk.Frame(input_frame)
-        button_frame.grid(row=4, column=0, columnspan=2, pady=10)
+        button_frame.grid(row=4, column=0, columnspan=2, pady=(15, 5))
         
-        ttk.Button(button_frame, text="店舗を登録", command=self.register_store).grid(row=0, column=0, padx=(0, 10))
-        ttk.Button(button_frame, text="クリア", command=self.clear_form).grid(row=0, column=1)
+        # 登録ボタン（強調）
+        register_btn = ttk.Button(button_frame, text="🏪 店舗を登録", command=self.register_store)
+        register_btn.grid(row=0, column=0, padx=(0, 15))
+        
+        # クリアボタン
+        clear_btn = ttk.Button(button_frame, text="🗑️ クリア", command=self.clear_form)
+        clear_btn.grid(row=0, column=1)
         
         # 店舗一覧セクション
-        list_frame = ttk.LabelFrame(main_frame, text="登録済み店舗一覧", padding="5")
-        list_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
+        list_frame = ttk.LabelFrame(main_frame, text="📋 登録済み店舗一覧", padding="10")
+        list_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Treeview for store list
         columns = ("ID", "店舗名", "座標", "商品数")
@@ -126,11 +135,11 @@ class AdminApp:
         
         # 店舗操作ボタン
         store_button_frame = ttk.Frame(list_frame)
-        store_button_frame.grid(row=1, column=0, columnspan=2, pady=5)
+        store_button_frame.grid(row=1, column=0, columnspan=2, pady=(10, 0))
         
-        ttk.Button(store_button_frame, text="位置編集", command=self.edit_store_coordinates).grid(row=0, column=0, padx=(0, 10))
-        ttk.Button(store_button_frame, text="選択した店舗を削除", command=self.delete_selected_store).grid(row=0, column=1, padx=(0, 10))
-        ttk.Button(store_button_frame, text="来場者用マップを開く", command=self.open_visitor_map).grid(row=0, column=2)
+        ttk.Button(store_button_frame, text="📝 位置編集", command=self.edit_store_coordinates).grid(row=0, column=0, padx=(0, 10))
+        ttk.Button(store_button_frame, text="🗑️ 選択した店舗を削除", command=self.delete_selected_store).grid(row=0, column=1, padx=(0, 10))
+        ttk.Button(store_button_frame, text="🌐 来場者用マップを開く", command=self.open_visitor_map).grid(row=0, column=2)
         
         # グリッド設定
         self.root.columnconfigure(0, weight=1)
@@ -141,28 +150,6 @@ class AdminApp:
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
     
-    def on_location_selected(self, event=None):
-        """場所が選択されたときの処理"""
-        location_name = self.location_var.get()
-        if not location_name:
-            return
-        
-        self.selected_location_name = location_name
-        location_data = get_location_data(location_name)
-        
-        if is_manual_input_required(location_name):
-            # 手動入力が必要な場合
-            self.manual_frame.grid()
-            self.coord_label.config(text=f"選択: {location_name} - 下記に座標を入力してください")
-            self.selected_lat = None
-            self.selected_lng = None
-        else:
-            # プリセット座標を使用
-            self.manual_frame.grid_remove()
-            self.selected_lat = location_data["latitude"]
-            self.selected_lng = location_data["longitude"]
-            self.coord_label.config(text=f"選択: {location_name} ({self.selected_lat:.6f}, {self.selected_lng:.6f})")
-    
     def confirm_manual_coordinates(self):
         """手動入力座標を確定"""
         try:
@@ -171,11 +158,39 @@ class AdminApp:
             
             self.selected_lat = lat
             self.selected_lng = lng
-            location_name = self.selected_location_name or "手動入力"
-            self.coord_label.config(text=f"選択: {location_name} ({lat:.6f}, {lng:.6f})")
+            self.coord_label.config(text=f"座標確定: 緯度 {lat:.6f}, 経度 {lng:.6f}")
             
         except ValueError:
             messagebox.showerror("エラー", "有効な数値を入力してください")
+    
+    def open_map_selector(self):
+        """地図選択ウィンドウを開く"""
+        def on_coordinates_selected(lat, lng):
+            # UIを更新（メインスレッドで実行）
+            self.root.after(0, lambda: self._update_coordinates_from_map(lat, lng))
+        
+        # 別スレッドで地図選択ウィンドウを開く
+        def run_map_selector():
+            try:
+                coordinates = select_coordinates_from_map(on_coordinates_selected)
+                if coordinates:
+                    lat, lng = coordinates
+                    # メインスレッドでUIを更新
+                    self.root.after(0, lambda: self._update_coordinates_from_map(lat, lng))
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("エラー", f"地図選択中にエラーが発生しました: {e}"))
+        
+        # 地図選択を別スレッドで実行
+        thread = threading.Thread(target=run_map_selector, daemon=True)
+        thread.start()
+    
+    def _update_coordinates_from_map(self, lat, lng):
+        """地図から選択された座標でUIを更新"""
+        self.manual_lat_var.set(f"{lat:.6f}")
+        self.manual_lng_var.set(f"{lng:.6f}")
+        self.selected_lat = lat
+        self.selected_lng = lng
+        self.coord_label.config(text=f"座標確定: 緯度 {lat:.6f}, 経度 {lng:.6f}")
     
     def show_preview_map(self):
         """プレビュー用の地図を表示"""
@@ -523,15 +538,12 @@ class AdminApp:
         self.add_product_row("ドリンク", "200")
         self.add_product_row("たこ焼き", "250")
         
-        self.location_var.set("")
-        self.location_combo.selection_clear()
+        # 座標関連をクリア
         self.selected_lat = None
         self.selected_lng = None
-        self.selected_location_name = None
         self.manual_lat_var.set("")
         self.manual_lng_var.set("")
-        self.manual_frame.grid_remove()
-        self.coord_label.config(text="位置が選択されていません")
+        self.coord_label.config(text="座標を入力してください")
     
     def load_stores(self):
         """店舗一覧を読み込み"""
