@@ -1,0 +1,44 @@
+# 添付ファイル（アップロードしたくないファイル）
+settings.local.json
+memo.md
+CLAUDE.md
+
+# 仮想環境
+venv/
+env/
+ENV/
+
+# データベースファイル
+*.db
+festival_stores.db
+
+# 生成されるHTMLファイル
+*.html
+festival_visitor_map.html
+
+# Python関連
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE・エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ログファイル
+*.log
+
+# 一時ファイル
+*.tmp
+*.temp
