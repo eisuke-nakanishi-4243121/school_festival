@@ -131,13 +131,13 @@ def update_store_coordinates(store_id, new_latitude, new_longitude):
     """店舗の座標を更新"""
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute('''
-        UPDATE stores 
-        SET latitude = ?, longitude = ? 
+        UPDATE stores
+        SET latitude = ?, longitude = ?
         WHERE id = ?
     ''', (new_latitude, new_longitude, store_id))
-    
+
     if cursor.rowcount > 0:
         conn.commit()
         conn.close()
@@ -147,6 +147,76 @@ def update_store_coordinates(store_id, new_latitude, new_longitude):
         conn.close()
         print(f"Store ID {store_id} not found")
         return False
+
+def update_store(store_id, name, latitude, longitude, description=""):
+    """店舗情報を更新"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        UPDATE stores
+        SET name = ?, latitude = ?, longitude = ?, description = ?
+        WHERE id = ?
+    ''', (name, latitude, longitude, description, store_id))
+
+    if cursor.rowcount > 0:
+        conn.commit()
+        conn.close()
+        return True
+    else:
+        conn.close()
+        return False
+
+def delete_products_by_store(store_id):
+    """特定店舗の商品をすべて削除"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('DELETE FROM products WHERE store_id = ?', (store_id,))
+
+    conn.commit()
+    conn.close()
+
+def get_store_by_id(store_id):
+    """IDで店舗を取得"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT id, name, latitude, longitude, description
+        FROM stores
+        WHERE id = ?
+    ''', (store_id,))
+
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    store = {
+        'id': row[0],
+        'name': row[1],
+        'latitude': row[2],
+        'longitude': row[3],
+        'description': row[4],
+        'products': []
+    }
+
+    # 商品を取得
+    cursor.execute('''
+        SELECT product_name, price
+        FROM products
+        WHERE store_id = ?
+    ''', (store_id,))
+
+    for product_row in cursor.fetchall():
+        store['products'].append({
+            'name': product_row[0],
+            'price': product_row[1]
+        })
+
+    conn.close()
+    return store
 
 if __name__ == "__main__":
     init_database()

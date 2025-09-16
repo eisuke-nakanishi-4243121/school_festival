@@ -70,27 +70,34 @@ class AdminApp:
         ttk.Button(button_coord_frame, text="👁️ 地図プレビュー", command=self.show_preview_map).pack(side=tk.LEFT)
         
         # 店舗情報入力セクション
-        input_frame = ttk.LabelFrame(main_frame, text="店舗情報入力", padding="10")
-        input_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 15))
+        self.input_frame = ttk.LabelFrame(main_frame, text="店舗情報入力", padding="10")
+        self.input_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 15))
+
+        # 編集モード表示用
+        self.edit_mode_label = ttk.Label(self.input_frame, text="", font=('Arial', 10, 'bold'), foreground='red')
+        self.edit_mode_label.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+
+        # 編集中店舗ID
+        self.editing_store_id = None
         
         # 店舗名
-        ttk.Label(input_frame, text="店舗名:", font=("", 10)).grid(row=0, column=0, sticky=tk.W, pady=(0, 8))
+        ttk.Label(self.input_frame, text="店舗名:", font=("", 10)).grid(row=1, column=0, sticky=tk.W, pady=(0, 8))
         self.store_name_var = tk.StringVar()
-        store_entry = ttk.Entry(input_frame, textvariable=self.store_name_var, width=35, font=("", 10))
-        store_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
-        
+        store_entry = ttk.Entry(self.input_frame, textvariable=self.store_name_var, width=35, font=("", 10))
+        store_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
+
         # 店舗説明
-        ttk.Label(input_frame, text="店舗説明:", font=("", 10)).grid(row=1, column=0, sticky=tk.W, pady=(0, 8))
+        ttk.Label(self.input_frame, text="店舗説明:", font=("", 10)).grid(row=2, column=0, sticky=tk.W, pady=(0, 8))
         self.description_var = tk.StringVar()
-        desc_entry = ttk.Entry(input_frame, textvariable=self.description_var, width=35, font=("", 10))
-        desc_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
-        
+        desc_entry = ttk.Entry(self.input_frame, textvariable=self.description_var, width=35, font=("", 10))
+        desc_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=(0, 8))
+
         # 商品情報の動的リスト
-        ttk.Label(input_frame, text="商品情報:", font=("", 10)).grid(row=2, column=0, sticky=(tk.W, tk.N), pady=(8, 0))
-        
+        ttk.Label(self.input_frame, text="商品情報:", font=("", 10)).grid(row=3, column=0, sticky=(tk.W, tk.N), pady=(8, 0))
+
         # 商品リスト用フレーム
-        self.products_frame = ttk.Frame(input_frame)
-        self.products_frame.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=(8, 0))
+        self.products_frame = ttk.Frame(self.input_frame)
+        self.products_frame.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=(8, 0))
         
         # 商品リストの管理
         self.product_entries = []
@@ -104,16 +111,26 @@ class AdminApp:
         self.add_product_row("たこ焼き", "250")\
         
         # ボタンフレーム
-        button_frame = ttk.Frame(input_frame)
+        button_frame = ttk.Frame(self.input_frame)
         button_frame.grid(row=4, column=0, columnspan=2, pady=(15, 5))
-        
+
         # 登録ボタン（強調）
-        register_btn = ttk.Button(button_frame, text="🏪 店舗を登録", command=self.register_store)
-        register_btn.grid(row=0, column=0, padx=(0, 15))
-        
+        self.register_btn = ttk.Button(button_frame, text="🏪 店舗を登録", command=self.register_store)
+        self.register_btn.grid(row=0, column=0, padx=(0, 15))
+
+        # 更新ボタン（編集時に表示）
+        self.update_btn = ttk.Button(button_frame, text="💾 更新", command=self.update_store)
+        self.update_btn.grid(row=0, column=0, padx=(0, 15))
+        self.update_btn.grid_remove()  # 初期は非表示
+
         # クリアボタン
-        clear_btn = ttk.Button(button_frame, text="🗑️ クリア", command=self.clear_form)
-        clear_btn.grid(row=0, column=1)
+        self.clear_btn = ttk.Button(button_frame, text="🗑️ クリア", command=self.clear_form)
+        self.clear_btn.grid(row=0, column=1, padx=(0, 15))
+
+        # キャンセルボタン（編集時に表示）
+        self.cancel_btn = ttk.Button(button_frame, text="❌ キャンセル", command=self.cancel_edit)
+        self.cancel_btn.grid(row=0, column=2)
+        self.cancel_btn.grid_remove()  # 初期は非表示
         
         # 店舗一覧セクション
         list_frame = ttk.LabelFrame(main_frame, text="📋 登録済み店舗一覧", padding="10")
@@ -137,16 +154,17 @@ class AdminApp:
         store_button_frame = ttk.Frame(list_frame)
         store_button_frame.grid(row=1, column=0, columnspan=2, pady=(10, 0))
         
-        ttk.Button(store_button_frame, text="📝 位置編集", command=self.edit_store_coordinates).grid(row=0, column=0, padx=(0, 10))
-        ttk.Button(store_button_frame, text="🗑️ 選択した店舗を削除", command=self.delete_selected_store).grid(row=0, column=1, padx=(0, 10))
-        ttk.Button(store_button_frame, text="🌐 来場者用マップを開く", command=self.open_visitor_map).grid(row=0, column=2)
+        ttk.Button(store_button_frame, text="📝 詳細編集", command=self.edit_store_details).grid(row=0, column=0, padx=(0, 10))
+        ttk.Button(store_button_frame, text="📍 位置編集", command=self.edit_store_coordinates).grid(row=0, column=1, padx=(0, 10))
+        ttk.Button(store_button_frame, text="🗑️ 削除", command=self.delete_selected_store).grid(row=0, column=2, padx=(0, 10))
+        ttk.Button(store_button_frame, text="🌐 来場者用マップを開く", command=self.open_visitor_map).grid(row=0, column=3)
         
         # グリッド設定
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         main_frame.rowconfigure(2, weight=1)
-        input_frame.columnconfigure(1, weight=1)
+        self.input_frame.columnconfigure(1, weight=1)
         list_frame.columnconfigure(0, weight=1)
         list_frame.rowconfigure(0, weight=1)
     
@@ -698,6 +716,126 @@ class AdminApp:
         except:
             pass  # エラーが発生しても処理を継続
     
+    def edit_store_details(self):
+        """選択された店舗の詳細を編集"""
+        selected_items = self.store_tree.selection()
+        if not selected_items:
+            messagebox.showwarning("警告", "編集する店舗を選択してください")
+            return
+
+        item = selected_items[0]
+        store_data = self.store_tree.item(item)['values']
+        store_id = store_data[0]
+
+        # データベースから店舗の詳細情報を取得
+        from database import get_store_by_id
+        store = get_store_by_id(store_id)
+
+        if not store:
+            messagebox.showerror("エラー", "店舗データが見つかりません")
+            return
+
+        self.load_store_for_editing(store)
+
+    def load_store_for_editing(self, store):
+        """メイン画面で店舗を編集モードに切り替え"""
+        # 編集モードに設定
+        self.editing_store_id = store['id']
+
+        # UI表示を編集モードに変更
+        self.edit_mode_label.config(text=f"編集中: {store['name']} (ID: {store['id']})")
+        self.input_frame.config(text="店舗情報編集")
+
+        # ボタン表示を変更
+        self.register_btn.grid_remove()
+        self.clear_btn.grid_remove()
+        self.update_btn.grid()
+        self.cancel_btn.grid()
+
+        # フォームに既存データを読み込み
+        self.store_name_var.set(store['name'])
+        self.description_var.set(store['description'] or "")
+        self.manual_lat_var.set(f"{store['latitude']:.6f}")
+        self.manual_lng_var.set(f"{store['longitude']:.6f}")
+        self.selected_lat = store['latitude']
+        self.selected_lng = store['longitude']
+        self.coord_label.config(text=f"座標確定: 緯度 {store['latitude']:.6f}, 経度 {store['longitude']:.6f}")
+
+        # 既存商品をクリア
+        for entry in self.product_entries:
+            entry['name_entry'].destroy()
+            entry['price_entry'].destroy()
+            entry['delete_btn'].destroy()
+        self.product_entries.clear()
+
+        # 既存商品を読み込み
+        if store['products']:
+            for product in store['products']:
+                self.add_product_row(product['name'], str(product['price']))
+        else:
+            self.add_product_row()
+
+    def cancel_edit(self):
+        """編集をキャンセルして通常モードに戻る"""
+        self.editing_store_id = None
+
+        # UI表示を通常モードに戻す
+        self.edit_mode_label.config(text="")
+        self.input_frame.config(text="店舗情報入力")
+
+        # ボタン表示を戻す
+        self.update_btn.grid_remove()
+        self.cancel_btn.grid_remove()
+        self.register_btn.grid()
+        self.clear_btn.grid()
+
+        # フォームをクリア
+        self.clear_form()
+
+    def update_store(self):
+        """編集中の店舗を更新"""
+        if not self.editing_store_id:
+            messagebox.showerror("エラー", "編集中の店舗がありません")
+            return
+
+        if self.selected_lat is None or self.selected_lng is None:
+            messagebox.showerror("エラー", "座標を設定してください")
+            return
+
+        store_name = self.store_name_var.get().strip()
+        if not store_name:
+            messagebox.showerror("エラー", "店舗名を入力してください")
+            return
+
+        products = self.get_products_data()
+        if not products:
+            messagebox.showerror("エラー", "最低1つの商品が必要です")
+            return
+
+        description = self.description_var.get().strip()
+
+        try:
+            # データベースを更新
+            from database import update_store, delete_products_by_store, add_product
+
+            # 店舗情報を更新
+            if update_store(self.editing_store_id, store_name, self.selected_lat, self.selected_lng, description):
+                # 既存商品を削除
+                delete_products_by_store(self.editing_store_id)
+
+                # 新しい商品を追加
+                for product in products:
+                    add_product(self.editing_store_id, product['name'], product['price'])
+
+                messagebox.showinfo("成功", f"店舗「{store_name}」の情報を更新しました")
+                self.cancel_edit()  # 編集モードを終了
+                self.load_stores()  # 店舗一覧を更新
+            else:
+                messagebox.showerror("エラー", "店舗情報の更新に失敗しました")
+
+        except Exception as e:
+            messagebox.showerror("エラー", f"更新中にエラーが発生しました: {e}")
+
     def open_visitor_map(self):
         """来場者用マップを開く"""
         from visitor_map import create_visitor_map
