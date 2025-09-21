@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_e1162322e23f542f8b11015a5e7556bc {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_e1162322e23f542f8b11015a5e7556bc" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_e1162322e23f542f8b11015a5e7556bc = L.map(
+                "map_e1162322e23f542f8b11015a5e7556bc",
+                {
+                    center: [39.703483, 141.144167],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 17,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_9e1edf48431be85fd2b547d982d5a84c = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_9e1edf48431be85fd2b547d982d5a84c.addTo(map_e1162322e23f542f8b11015a5e7556bc);
+        
+    
+            var marker_95503f10c05c06df75d32ea9fdd298da = L.marker(
+                [39.703503, 141.144056],
+                {
+}
+            ).addTo(map_e1162322e23f542f8b11015a5e7556bc);
+        
+    
+            var icon_5c00e4820013a3f10c1e7579d4401840 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "cutlery",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b0f4eb6208ee0bf0e2b88dc411febeb4 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_a421b4c9fa1fa7f48f3634c146219295 = $(`<div id="html_a421b4c9fa1fa7f48f3634c146219295" style="width: 100.0%; height: 100.0%;">         <div style="width: 250px; font-family: Arial, sans-serif;">             <h3 style="color: #2E8B57; margin-bottom: 10px;">クレープ屋</h3>             <p style="color: #666; margin-bottom: 8px;"><em>情報システム化2年生のお店</em></p>             <div style="background-color: #f8f9fa; padding: 8px; border-radius: 5px;">                 <h4 style="color: #495057; margin-top: 0; margin-bottom: 8px;">商品・価格</h4>         <div style="margin-bottom: 3px;">• プレーン: <span style="font-weight: bold; color: #dc3545;">300円</span></div><div style="margin-bottom: 3px;">• チョコバナナ: <span style="font-weight: bold; color: #dc3545;">400円</span></div><div style="margin-bottom: 3px;">• いちごミルフィーユ: <span style="font-weight: bold; color: #dc3545;">500円</span></div>             </div>         </div>         </div>`)[0];
+                popup_b0f4eb6208ee0bf0e2b88dc411febeb4.setContent(html_a421b4c9fa1fa7f48f3634c146219295);
+            
+        
+
+        marker_95503f10c05c06df75d32ea9fdd298da.bindPopup(popup_b0f4eb6208ee0bf0e2b88dc411febeb4)
+        ;
+
+        
+    
+    
+            marker_95503f10c05c06df75d32ea9fdd298da.bindTooltip(
+                `<div>
+                     クレープ屋
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_95503f10c05c06df75d32ea9fdd298da.setIcon(icon_5c00e4820013a3f10c1e7579d4401840);
+            
+    
+            var marker_da48494d020006421449359a1740c9cf = L.marker(
+                [39.703483, 141.144167],
+                {
+}
+            ).addTo(map_e1162322e23f542f8b11015a5e7556bc);
+        
+    
+            var icon_0be7a8057795693dfe6384696a70acaf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "star",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ce0a8106b639337e6e4c4bff241b4b72 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_3f476bca0cc3e947df395373184d043c = $(`<div id="html_3f476bca0cc3e947df395373184d043c" style="width: 100.0%; height: 100.0%;"><h3 style='color: #FF6B35; text-align: center;'>学園祭会場</h3><p style='text-align: center;'>各店舗のマーカーをクリックしてください！</p></div>`)[0];
+                popup_ce0a8106b639337e6e4c4bff241b4b72.setContent(html_3f476bca0cc3e947df395373184d043c);
+            
+        
+
+        marker_da48494d020006421449359a1740c9cf.bindPopup(popup_ce0a8106b639337e6e4c4bff241b4b72)
+        ;
+
+        
+    
+    
+            marker_da48494d020006421449359a1740c9cf.bindTooltip(
+                `<div>
+                     学園祭会場
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_da48494d020006421449359a1740c9cf.setIcon(icon_0be7a8057795693dfe6384696a70acaf);
+            
+</script>
+</html>

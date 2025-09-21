@@ -2,6 +2,7 @@
 settings.local.json
 memo.md
 CLAUDE.md
+.claude
 
 # 仮想環境
 venv/
@@ -12,9 +13,9 @@ ENV/
 *.db
 festival_stores.db
 
-# 生成されるHTMLファイル
-*.html
-festival_visitor_map.html
+# 生成されるHTMLファイル（festival_visitor_map.html以外）
+map_selector_template.html
+*_map_*.html
 
 # Python関連
 __pycache__/
