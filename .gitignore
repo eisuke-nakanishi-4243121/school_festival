@@ -15,7 +15,7 @@ festival_stores.db
 
 # 生成されるHTMLファイル（festival_visitor_map.html以外）
 map_selector_template.html
-*_map_*.html
+
 
 # Python関連
 __pycache__/
