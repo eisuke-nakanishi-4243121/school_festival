@@ -11,7 +11,7 @@ def create_visitor_map(output_file="festival_visitor_map.html"):
     # 地図を作成
     m = folium.Map(
         location=[center_lat, center_lng],
-        zoom_start=17,
+        zoom_start=19,
         tiles='OpenStreetMap'
     )
     
